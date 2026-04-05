@@ -1,0 +1,3 @@
+filePattern: "src/**/*.txt"
+scanLimit: 2
+changeLimit: 1
