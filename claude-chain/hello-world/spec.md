@@ -6,4 +6,4 @@ Create text files as described in each task. Each file should contain exactly th
 
 - [ ] Create `output/hello-1.txt` containing the single line: `Hello World`
 - [ ] Create `output/hello-2.txt` containing the single line: `Hello Again`
-- [ ] Create `output/hello-3.txt` containing the single line: `Goodbye World`
+- [x] Create `output/hello-3.txt` containing the single line: `Goodbye World`
