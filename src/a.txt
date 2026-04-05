@@ -1,2 +1,3 @@
+# auto-generated header
 This is file A.
 Some content here.
