@@ -66,6 +66,12 @@ jobs:
           cd aidevtools/AIDevToolsKit
           swift build -c release --product ai-dev-tools-kit
 
+      - name: Install Claude CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Exclude aidevtools checkout from git tracking
+        run: echo "aidevtools/" >> ${{ github.workspace }}/.gitignore
+
       - name: Resolve project and branch
         id: resolve
         run: |
@@ -88,5 +94,4 @@ jobs:
           swift run -c release ai-dev-tools-kit claude-chain run-task \
             --project "${{ steps.resolve.outputs.project }}" \
             --repo-path ${{ github.workspace }} \
-            --base-branch "${{ steps.resolve.outputs.base_branch }}" \
-            --provider anthropic-api
+            --base-branch "${{ steps.resolve.outputs.base_branch }}"
