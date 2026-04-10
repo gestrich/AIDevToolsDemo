@@ -1,0 +1,92 @@
+name: Claude Chain
+
+on:
+  workflow_dispatch:
+    inputs:
+      project_name:
+        description: 'Project name (folder under claude-chain/)'
+        required: true
+      base_branch:
+        description: 'Base branch for PR'
+        required: false
+        default: 'main'
+  pull_request:
+    types: [closed]
+    paths:
+      - 'claude-chain/**'
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
+
+jobs:
+  run-claude-chain:
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+    name: Run Claude Chain Task
+    runs-on: macos-latest
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Checkout AIDevTools
+        uses: actions/checkout@v4
+        with:
+          repository: gestrich/AIDevTools
+          ref: main
+          path: aidevtools
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Swift 6.2
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "6.2"
+
+      - name: Configure git identity
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git config --global --add safe.directory ${{ github.workspace }}
+
+      - name: Set up git credentials
+        run: |
+          echo "machine github.com login x-access-token password ${{ secrets.GITHUB_TOKEN }}" >> ~/.netrc
+          echo "machine api.github.com login x-access-token password ${{ secrets.GITHUB_TOKEN }}" >> ~/.netrc
+          chmod 600 ~/.netrc
+
+      - name: Build AIDevTools CLI
+        run: |
+          cd aidevtools/AIDevToolsKit
+          swift build -c release --product ai-dev-tools-kit
+
+      - name: Resolve project and branch
+        id: resolve
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BRANCH="${{ github.event.pull_request.head.ref }}"
+            # Branch format: claude-chain-<project>-<8_hex_chars>
+            PROJECT=$(echo "$BRANCH" | sed 's/^claude-chain-//' | sed 's/-[0-9a-f]\{8\}$//')
+            BASE_BRANCH="${{ github.event.pull_request.base.ref }}"
+          else
+            PROJECT="${{ github.event.inputs.project_name }}"
+            BASE_BRANCH="${{ github.event.inputs.base_branch }}"
+          fi
+          echo "project=$PROJECT" >> $GITHUB_OUTPUT
+          echo "base_branch=$BASE_BRANCH" >> $GITHUB_OUTPUT
+          echo "Resolved: project=$PROJECT base_branch=$BASE_BRANCH"
+
+      - name: Run Claude Chain task
+        run: |
+          cd aidevtools/AIDevToolsKit
+          swift run -c release ai-dev-tools-kit claude-chain run-task \
+            --project "${{ steps.resolve.outputs.project }}" \
+            --repo-path ${{ github.workspace }} \
+            --base-branch "${{ steps.resolve.outputs.base_branch }}" \
+            --provider anthropic-api
