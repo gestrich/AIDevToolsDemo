@@ -43,13 +43,18 @@ jobs:
           path: prradar-tool
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Install Swift 6.2
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "6.2"
+
       - name: Mark workspace as safe directory
         run: git config --global --add safe.directory ${{ github.workspace }}
 
       - name: Build PRRadar
         run: |
           cd prradar-tool/PRRadarLibrary
-          swift build -c release 2>&1 | tail -20
+          swift build -c release
 
       - name: Create config
         run: |
