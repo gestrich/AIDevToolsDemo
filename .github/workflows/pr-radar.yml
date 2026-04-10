@@ -36,11 +36,12 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Checkout PRRadar
+      - name: Checkout AIDevTools
         uses: actions/checkout@v4
         with:
-          repository: gestrich/PRRadar
-          path: prradar-tool
+          repository: gestrich/AIDevTools
+          ref: ci/pr-radar-demo
+          path: aidevtools
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install Swift 6.2
@@ -51,30 +52,34 @@ jobs:
       - name: Mark workspace as safe directory
         run: git config --global --add safe.directory ${{ github.workspace }}
 
-      - name: Build PRRadar
+      - name: Build AIDevTools CLI
         run: |
-          cd prradar-tool/PRRadarLibrary
-          swift build -c release
+          cd aidevtools/AIDevToolsKit
+          swift build -c release --target AIDevToolsKitCLI
 
-      - name: Create config
+      - name: Create PRRadar config
         run: |
-          cd prradar-tool/PRRadarLibrary
-          swift run -c release PRRadarMacCLI config add ci \
+          cd aidevtools/AIDevToolsKit
+          swift run -c release AIDevToolsKitCLI prradar config add ci \
             --repo-path ${{ github.workspace }} \
             --rules-dir ${{ github.workspace }}/code-review-rules \
             --github-account ci \
-            --set-default
+            --data-path /tmp/prradar-ci-data
 
       - name: Run review pipeline
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          cd prradar-tool/PRRadarLibrary
+          cd aidevtools/AIDevToolsKit
 
-          ARGS="${{ github.event.inputs.pr_number }} --config ci --output-dir /tmp/prradar-output --diff-source github-api --mode ${{ github.event.inputs.mode }}"
+          ARGS="${{ github.event.inputs.pr_number }} \
+            --config ci \
+            --data-path /tmp/prradar-ci-data \
+            --diff-source github-api \
+            --mode ${{ github.event.inputs.mode }}"
 
           if [ "${{ github.event.inputs.post_comments }}" = "true" ]; then
             ARGS="$ARGS --no-dry-run"
           fi
 
-          swift run -c release PRRadarMacCLI run $ARGS
+          swift run -c release AIDevToolsKitCLI prradar run $ARGS
