@@ -1,2 +1,4 @@
 This is file B.
 Some content here.
+
+FIXME: remove this debug logging before merging
