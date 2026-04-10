@@ -40,7 +40,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: gestrich/AIDevTools
-          ref: ci/pr-radar-demo
+          ref: main
           path: aidevtools
           token: ${{ secrets.GITHUB_TOKEN }}
 
