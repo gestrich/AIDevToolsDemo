@@ -1,0 +1,75 @@
+name: PR Radar
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to review'
+        required: true
+      mode:
+        description: 'Analysis mode'
+        required: false
+        default: 'regex'
+        type: choice
+        options:
+          - regex
+          - all
+          - ai
+      post_comments:
+        description: 'Post comments to PR'
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  review:
+    runs-on: macos-latest
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Checkout PRRadar
+        uses: actions/checkout@v4
+        with:
+          repository: gestrich/PRRadar
+          path: prradar-tool
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Mark workspace as safe directory
+        run: git config --global --add safe.directory ${{ github.workspace }}
+
+      - name: Build PRRadar
+        run: |
+          cd prradar-tool/PRRadarLibrary
+          swift build -c release 2>&1 | tail -20
+
+      - name: Create config
+        run: |
+          cd prradar-tool/PRRadarLibrary
+          swift run -c release PRRadarMacCLI config add ci \
+            --repo-path ${{ github.workspace }} \
+            --rules-dir ${{ github.workspace }}/code-review-rules \
+            --github-account ci \
+            --set-default
+
+      - name: Run review pipeline
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd prradar-tool/PRRadarLibrary
+
+          ARGS="${{ github.event.inputs.pr_number }} --config ci --output-dir /tmp/prradar-output --diff-source github-api --mode ${{ github.event.inputs.mode }}"
+
+          if [ "${{ github.event.inputs.post_comments }}" = "true" ]; then
+            ARGS="$ARGS --no-dry-run"
+          fi
+
+          swift run -c release PRRadarMacCLI run $ARGS
