@@ -1,3 +1,6 @@
 # auto-generated header
 This is file A.
 Some content here.
+
+FIXME: this calculation is wrong, needs to be fixed before release
+Updated content for module A.
