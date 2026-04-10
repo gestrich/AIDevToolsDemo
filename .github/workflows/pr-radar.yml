@@ -55,12 +55,12 @@ jobs:
       - name: Build AIDevTools CLI
         run: |
           cd aidevtools/AIDevToolsKit
-          swift build -c release --target AIDevToolsKitCLI
+          swift build -c release --product ai-dev-tools-kit
 
       - name: Create PRRadar config
         run: |
           cd aidevtools/AIDevToolsKit
-          swift run -c release AIDevToolsKitCLI prradar config add ci \
+          swift run -c release ai-dev-tools-kit prradar config add ci \
             --repo-path ${{ github.workspace }} \
             --rules-dir ${{ github.workspace }}/code-review-rules \
             --github-account ci \
@@ -82,4 +82,4 @@ jobs:
             ARGS="$ARGS --no-dry-run"
           fi
 
-          swift run -c release AIDevToolsKitCLI prradar run $ARGS
+          swift run -c release ai-dev-tools-kit prradar run $ARGS
