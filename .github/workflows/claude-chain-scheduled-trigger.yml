@@ -1,6 +1,6 @@
 name: Claude Chain Scheduled Trigger
 
-# Runs hourly to find Claude Chain projects with available capacity
+# Runs every 8 hours to find Claude Chain projects with available capacity
 # and triggers up to max_triggers workflow_dispatch jobs for claude-chain.yml.
 # Can also be triggered manually for validation or operational backfills.
 on:
