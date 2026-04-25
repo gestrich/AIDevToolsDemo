@@ -34,7 +34,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: gestrich/AIDevTools
-          ref: main
+          ref: f2750e1d7b5fc62e7e52ae2f39f8a631df9e5636
           path: aidevtools
           token: ${{ secrets.GITHUB_TOKEN }}
 
