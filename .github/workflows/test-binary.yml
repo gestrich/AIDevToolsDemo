@@ -1,0 +1,47 @@
+name: Test Binary
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version to test (e.g. v0.1.0). Leave blank for latest.'
+        required: false
+        default: ''
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve version
+        id: version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT"
+          else
+            VERSION=$(curl -fsSL https://api.github.com/repos/gestrich/AIDevTools/releases/latest \
+              | grep '"tag_name"' | sed 's/.*"tag_name": *"\([^"]*\)".*/\1/')
+            echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download release assets
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          BASE_URL="https://github.com/gestrich/AIDevTools/releases/download/${VERSION}"
+          curl -fsSL "${BASE_URL}/ai-dev-tools-kit-linux-x86_64.tar.gz" -o ai-dev-tools-kit-linux-x86_64.tar.gz
+          curl -fsSL "${BASE_URL}/checksums.txt" -o checksums.txt
+
+      - name: Verify checksum
+        run: |
+          grep "ai-dev-tools-kit-linux-x86_64.tar.gz" checksums.txt | sha256sum --check
+
+      - name: Install binary
+        run: |
+          tar -xzf ai-dev-tools-kit-linux-x86_64.tar.gz
+          sudo mv ai-dev-tools-kit /usr/local/bin/ai-dev-tools-kit
+          sudo chmod +x /usr/local/bin/ai-dev-tools-kit
+
+      - name: Verify help output
+        run: ai-dev-tools-kit --help
+
+      - name: Verify prradar subcommand routing
+        run: ai-dev-tools-kit prradar --help
