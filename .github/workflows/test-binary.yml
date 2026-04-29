@@ -34,6 +34,11 @@ jobs:
         run: |
           grep "ai-dev-tools-kit-linux-x86_64.tar.gz" checksums.txt | sha256sum --check
 
+      - name: Verify attestation
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh attestation verify ai-dev-tools-kit-linux-x86_64.tar.gz --repo gestrich/AIDevTools
+
       - name: Install binary
         run: |
           tar -xzf ai-dev-tools-kit-linux-x86_64.tar.gz
